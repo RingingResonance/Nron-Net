@@ -4,10 +4,10 @@
 #include "nnet.h"
 
 
-#define iputsCNT 1000      //100 inputs per nron for now.
-#define nNiputs 1000      //total number of main data inputs of this net.
+#define iputsCNT 10000      //100 inputs per nron for now.
+#define nNiputs 10000      //total number of main data inputs of this net.
 //#define nronCNT 3000      //300 nrons. 100 X 3
-#define oputsCNT 1000     //total number of outputs.
+#define oputsCNT 10000     //total number of outputs.
 #define lyrCNT 3
 #define nronThrds 8
 #define bequiet 1
@@ -56,15 +56,6 @@ int main()
         nNetSupervise[x] = 100;
         x++;
     }
-
-    nNetOutput[0] = 0;
-    nNetOutput[1] = 0;
-    nNetOutput[2] = 0;
-    nNetOutput[3] = 0;
-    nNetOutput[4] = 0;
-
-
-    plastic = 0.1;
 
     x = 0;
     unsigned int v = 0;
@@ -396,16 +387,12 @@ void threader::weightCalc(unsigned int t){
 
 /* Fix Me. Why is this so slow? */
 void threader::backConnect(unsigned int t){
-    register unsigned int i = 0;  //working nron.
-    register unsigned int n = 0;  //donor nron input.
-    register unsigned int x = 0;  //donor nron.
+    unsigned int i = 0;
+    register unsigned int x = 0;
     register unsigned int w = 0;
-    register unsigned int layr = 0;
-    register unsigned int backnum = 0;
-    register unsigned int inTotal = 1;
-
     register float adder = 0;
-
+    unsigned int layr = 0;
+    unsigned int backnum = 0;
     unsigned int tSplit;
     unsigned int tCount;
     unsigned int tEnd;

@@ -4,7 +4,7 @@
 #ifndef nnet
 #define nnet
 
-#define nronCNT 3000
+#define nronCNT 30000
 
     extern double* nNetInput;
     extern double* nNetOutput;
