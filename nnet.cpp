@@ -385,7 +385,7 @@ void threader::weightCalc(unsigned int t){
     cout << "Thread " << t << "finished weight calculation. \n";
 }
 
-/* Fix Me. Why is this so slow? */
+/* Fix Me. Why is this so slow? Because of the way it fights with memory caching. */
 void threader::backConnect(unsigned int t){
     unsigned int i = 0;
     register unsigned int x = 0;
