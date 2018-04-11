@@ -4,7 +4,7 @@
 #ifndef nnet
 #define nnet
 
-#define nronCNT 30000
+#define nronCNT 2000
 
     extern double* nNetInput;
     extern double* nNetOutput;
@@ -12,7 +12,7 @@
 
     void netInit(void);
     void netRun(void);
-    void ForwardNetRun(void);
+    void FnetRun(void);
 
 struct Nvars {
     public:

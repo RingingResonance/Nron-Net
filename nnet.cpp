@@ -4,13 +4,16 @@
 #include "nnet.h"
 
 
-#define iputsCNT 10000      //100 inputs per nron for now.
-#define nNiputs 10000      //total number of main data inputs of this net.
-//#define nronCNT 3000      //300 nrons. 100 X 3
-#define oputsCNT 10000     //total number of outputs.
-#define lyrCNT 3
-#define nronThrds 8
-#define bequiet 1
+#define iputsCNT 1000      //100 inputs per nron for now.
+#define nNiputs 1000      //total number of main data inputs of this net.
+//#define nronCNT 3000      //300 nrons. 100 X 3 Is Located in header file now!!!
+#define oputsCNT 1000     //total number of outputs.
+#define lyrCNT 2            //Number of layers.
+#define nronThrds 8         //how many threads should be run. Must evenly divide number of inputs and nrons.
+#define bequiet 1           // diagnostics data.
+#define swtime 24           //switch data every 12 passes.
+#define frdTimer 1000000     //Run back prop. for this many passes then switch to forward only.
+#define LMode 0.000001
 
 
 
@@ -22,9 +25,13 @@ using namespace std;
 
     void weightInit(void);
     void plasticityCalc(void);
+    void swtch(void);
     float TanH(double);
     double plastic;
     unsigned int layers = 0;
+    int swTimer = 0;
+    int sw = 0;
+    int frdtime = frdTimer;
 
 
 
@@ -61,16 +68,50 @@ int main()
     unsigned int v = 0;
     cout << "Nron Net Started! \n";
     while (1 == 1){
-        netRun();
-            cout << nNetOutput[0] << " " << nNetOutput[1] << " ";
-            cout << nNetOutput[2] << " " << nNetOutput[3] << " ";
-            cout << nNetOutput[4] << " " << nNetOutput[5] << "\n";
+
+        swtch();
+        if (frdtime > 0){
+            netRun();
+            frdtime--;
+        }
+        else{
+            FnetRun();
+        }
+            cout << "Passes left: " << frdtime
+            << "  Input 2: " << nNetInput[1]
+            << "  Output 1: " << nNetOutput[0]
+            << "  Output 2: " << nNetOutput[1]
+            << "\n";
             v = 0;
         x++;
     }
     cout << "done. \n";
     cin >> x;
     return 0;
+}
+
+void swtch(void){
+    if (swTimer <= 0){
+        if (sw == 0){
+            nNetInput[1] = 100;
+            nNetSupervise[0] = 20;
+            sw = 1;
+        }
+        else if (sw == 1){
+            nNetInput[1] = 10;
+            nNetSupervise[0] = 80;
+            sw = 0;
+        }
+        if (frdtime > 0){
+            swTimer = swtime;
+        }
+        else {
+            swTimer = 1000;
+        }
+    }
+    else {
+        swTimer--;
+    }
 }
 
 Nvars::Nvars(void)
@@ -84,10 +125,12 @@ void weightInit(void){
     cout << "Presetting weights... \n";
     unsigned int i = 0;
     unsigned int n = 0;
+    double initWeight = 0.01;
     while (i < nronCNT){
         n = 0;
         while (n < iputsCNT){
-            nron[i].weights[n] = 0.1;
+            nron[i].weights[n] = initWeight;
+            initWeight += 0.00001;
             n++;
         }
     i++;
@@ -152,10 +195,23 @@ void netInit(void){
     weightInit();
 }
 
-void ForwardNetRun(void){
+void FnetRun(void){
+    thread threads[nronThrds];
     int i = 0;
-    //forwardCalc(i);
-    //forwardConnect(i);
+    // spawn n threads:
+    for (int i = 0; i < nronThrds; i++) {
+        threads[i] = thread(threader::forwardConnect, i);
+    }
+    for (auto& th : threads) {
+        th.join();
+    }
+    // spawn n threads:
+    for (int i = 0; i < nronThrds; i++) {
+        threads[i] = thread(threader::forwardCalc, i);
+    }
+    for (auto& th : threads) {
+        th.join();
+    }
 }
 
 void netRun(void){
@@ -352,7 +408,7 @@ void threader::weightCalc(unsigned int t){
 /* Weight calculations. */
     register unsigned int i = 0;
     register unsigned int n = 0;
-    register double wCalc = 0.0001;    //time in seconds between each process. Tuned for -100 to 100
+    register double wCalc = LMode;
     register double a = 0;
     unsigned int tSplit;
     unsigned int tCount = 0;
@@ -370,7 +426,7 @@ void threader::weightCalc(unsigned int t){
         n = 0;
         while (n < iputsCNT){
             a = nron[i].backerr * nron[nron[i].inConnect[n]].output;
-            nron[i].weights[n] += (a * wCalc) /* plastic*/;        //Supposed to Integrate. Timing is off for now.
+            nron[i].weights[n] += (a * wCalc);
             if (nron[i].weights[n] > 10){
                 nron[i].weights[n] = 10;
             }
@@ -398,7 +454,6 @@ void threader::backConnect(unsigned int t){
     unsigned int tEnd;
     //cout << t << "\n";
 
-    //L1tst = nron[20].backput;
     layr = iputsCNT;
     while (i < nronCNT){
         if (backnum == iputsCNT){
