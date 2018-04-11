@@ -27,7 +27,6 @@ using namespace std;
     void plasticityCalc(void);
     void swtch(void);
     float TanH(double);
-    double plastic;
     unsigned int layers = 0;
     int swTimer = 0;
     int sw = 0;
@@ -68,7 +67,6 @@ int main()
     unsigned int v = 0;
     cout << "Nron Net Started! \n";
     while (1 == 1){
-
         swtch();
         if (frdtime > 0){
             netRun();
@@ -77,12 +75,12 @@ int main()
         else{
             FnetRun();
         }
-            cout << "Passes left: " << frdtime
-            << "  Input 2: " << nNetInput[1]
-            << "  Output 1: " << nNetOutput[0]
-            << "  Output 2: " << nNetOutput[1]
-            << "\n";
-            v = 0;
+        cout << "Passes left: " << frdtime
+        << "  Input 2: " << nNetInput[1]
+        << "  Output 1: " << nNetOutput[0]
+        << "  Output 2: " << nNetOutput[1]
+        << "\n";
+        v = 0;
         x++;
     }
     cout << "done. \n";
@@ -114,6 +112,7 @@ void swtch(void){
     }
 }
 
+/* Constructor. */
 Nvars::Nvars(void)
 {
     BackOuts = new double[iputsCNT];
@@ -121,6 +120,7 @@ Nvars::Nvars(void)
     inConnect = new unsigned int[iputsCNT];     //where our inputs connect to.
 }
 
+/* Initial weight configuration. */
 void weightInit(void){
     cout << "Presetting weights... \n";
     unsigned int i = 0;
@@ -138,6 +138,7 @@ void weightInit(void){
     cout << "Done. \n";
 }
 
+/* Pre-configure the network. */
 void netInit(void){
     //cout << "Creating Nron vars in memory... \n";
 
@@ -195,86 +196,52 @@ void netInit(void){
     weightInit();
 }
 
+/* Forward only net run. */
 void FnetRun(void){
     thread threads[nronThrds];
     int i = 0;
-    // spawn n threads:
-    for (int i = 0; i < nronThrds; i++) {
-        threads[i] = thread(threader::forwardConnect, i);
-    }
-    for (auto& th : threads) {
-        th.join();
-    }
-    // spawn n threads:
-    for (int i = 0; i < nronThrds; i++) {
-        threads[i] = thread(threader::forwardCalc, i);
-    }
-    for (auto& th : threads) {
-        th.join();
-    }
+    // threads for forward connect.
+    for (int i = 0; i < nronThrds; i++) {threads[i] = thread(threader::forwardConnect, i);}
+    for (auto& th : threads) {th.join();}
+    // threads for forward calculation
+    for (int i = 0; i < nronThrds; i++) {threads[i] = thread(threader::forwardCalc, i);}
+    for (auto& th : threads) {th.join();}
 }
 
+/* Full net run. */
 void netRun(void){
     thread threads[nronThrds];
 
 int i = 0;
-    // spawn n threads:
-    for (int i = 0; i < nronThrds; i++) {
-        threads[i] = thread(threader::forwardConnect, i);
-    }
-    for (auto& th : threads) {
-        th.join();
-    }
-    // spawn n threads:
-    for (int i = 0; i < nronThrds; i++) {
-        threads[i] = thread(threader::forwardCalc, i);
-    }
-    for (auto& th : threads) {
-        th.join();
-    }
+    // threads for forward connect.
+    for (int i = 0; i < nronThrds; i++) {threads[i] = thread(threader::forwardConnect, i);}
+    for (auto& th : threads) {th.join();}
+    // threads for forward calculation
+    for (int i = 0; i < nronThrds; i++) {threads[i] = thread(threader::forwardCalc, i);}
+    for (auto& th : threads) {th.join();}
 
-    // spawn n threads:
-    for (int i = 0; i < nronThrds; i++) {
-        threads[i] = thread(threader::backConnect, i);
-    }
-    for (auto& th : threads) {
-        th.join();
-    }
+    // threads for back connect
+    for (int i = 0; i < nronThrds; i++) {threads[i] = thread(threader::backConnect, i);}
+    for (auto& th : threads) {th.join();}
 
-    // spawn n threads:
-    for (int i = 0; i < nronThrds; i++) {
-        threads[i] = thread(threader::L2BackConnect, i);
-    }
-    for (auto& th : threads) {
-        th.join();
-    }
+    // threads for Layer 2 back connect
+    for (int i = 0; i < nronThrds; i++) {threads[i] = thread(threader::L2BackConnect, i);}
+    for (auto& th : threads) {th.join();}
 
-    // spawn n threads:
-    for (int i = 0; i < nronThrds; i++) {
-        threads[i] = thread(threader::BackPutsDiv, i);
-    }
-    for (auto& th : threads) {
-        th.join();
-    }
+    // threads for BackPuts dividing
+    for (int i = 0; i < nronThrds; i++) {threads[i] = thread(threader::BackPutsDiv, i);}
+    for (auto& th : threads) {th.join();}
 
-    // spawn n threads:
-    for (int i = 0; i < nronThrds; i++) {
-        threads[i] = thread(threader::backCalc, i);
-    }
-    for (auto& th : threads) {
-        th.join();
-    }
+    // threads for Back calculation
+    for (int i = 0; i < nronThrds; i++) {threads[i] = thread(threader::backCalc, i);}
+    for (auto& th : threads) {th.join();}
 
     unsigned int x;
     x = lyrCNT * 2;
     if (layers > x){
-        // spawn n threads:
-        for (int i = 0; i < nronThrds; i++) {
-            threads[i] = thread(threader::weightCalc, i);
-        }
-        for (auto& th : threads) {
-            th.join();
-        }
+        // threads for weight calculation
+        for (int i = 0; i < nronThrds; i++) {threads[i] = thread(threader::weightCalc, i);}
+        for (auto& th : threads) {th.join();}
         //weightCalc();
         layers = 0;
     }
@@ -282,6 +249,13 @@ int i = 0;
         layers++;
     }
 }
+
+
+
+
+
+/* Abandon all hope, ye who enter here. */
+
 
 void threader::forwardCalc(unsigned int t){
     register unsigned int i = 0;
@@ -352,6 +326,7 @@ void threader::forwardConnect(unsigned int t){
     cout << "Thread " << t << " finished forward connect. \n";
 }
 
+/*  */
 float TanH(double x){
     float y = 0;
     double temp1 = 0;
@@ -364,6 +339,8 @@ float TanH(double x){
     y = temp1 / temp2;
     return y;
 }
+
+
 
 void threader::backCalc(unsigned int t){
     register unsigned int i = 0;
@@ -539,37 +516,4 @@ void threader::L2BackConnect(unsigned int t){
 
 /* I say things the way that I say things so that my brain knows that what I am saying is true to my own understanding.
 If I say something that is false then I am either lying or my understanding is incomplete. */
-
-void plasticityCalc(void){
-    unsigned int i = 0;
-    plastic = 0;
-    float x = 0;
-    float y = 0;
-    float z = 0;
-    while (i < oputsCNT){
-        x = nNetSupervise[i];
-        y = nNetOutput[i];
-        if (x - y < 0){
-            plastic += (x - y) * -1;
-        }
-        else{
-            plastic += x - y;
-        }
-        i++;
-    }
-    z = plastic;
-    plastic = z;
-    plastic /= oputsCNT;
-    plastic = TanH(plastic);
-    if (plastic > 1){
-        plastic = 1;
-    }
-    else if (plastic < -1){
-        plastic = -1;
-    }
-    //L1tst = plastic;
-}
-
-
-
 
